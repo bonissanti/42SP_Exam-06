@@ -42,6 +42,36 @@ int main(const int argc, char **argv)
         ft_putstr_fd(2, "Fatal error\n");
         return 1;
     }
+
+    fd_set read_fds;
+    fd_set write_fds;
+    fd_set current_fds;
+
+    FD_ZERO(&read_fds);
+    FD_ZERO(&write_fds);
+    FD_ZERO(&current_fds);
+    FD_SET(socket_fd, &read_fds);
+
+    while (true)
+    {
+        current_fds = read_fds;
+        if (select(FD_SETSIZE, &current_fds, NULL, NULL, NULL) < 0)
+        {
+            ft_putstr_fd(2, "Fatal error\n");
+            return 1;
+        }
+        for (int i = 0; i < FD_SETSIZE; i++)
+        {
+            if (FD_ISSET(i, &current_fds))
+            {
+                if (i == socket_fd)
+                {
+                    int client_fd =
+                }
+
+            }
+        }
+    }
     return 0;
 
 }
