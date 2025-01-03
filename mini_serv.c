@@ -1,10 +1,10 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <stdlib.h>
-#include <arpa/inet.h>
 
 void ft_putstr_fd(int fd, const char *str)
 {
@@ -66,7 +66,20 @@ int main(const int argc, char **argv)
             {
                 if (i == socket_fd)
                 {
-                    int client_fd =
+                    socklen_t len = sizeof(server);
+                    const int client_fd = accept(socket_fd, (struct sockaddr *)&server, &len);
+                    if (client_fd < 0)
+                    {
+                        ft_putstr_fd(2, "Fatal error\n");
+                        return 1;
+                    }
+                    ft_putstr_fd(1, "Client connected\n");
+                }
+                else
+                {
+                    char buffer[65536];
+                    size_t bytes_read;
+
                 }
 
             }
