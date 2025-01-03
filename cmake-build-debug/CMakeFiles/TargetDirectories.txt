@@ -1,0 +1,3 @@
+/home/bruno/Documents/42SP/Exam06/cmake-build-debug/CMakeFiles/Exam06.dir
+/home/bruno/Documents/42SP/Exam06/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/bruno/Documents/42SP/Exam06/cmake-build-debug/CMakeFiles/rebuild_cache.dir
