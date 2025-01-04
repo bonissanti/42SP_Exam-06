@@ -18,8 +18,9 @@ void ft_putstr_fd(int fd, const char *str)
 
 int main(const int argc, char **argv)
 {
-    struct sockaddr_in server;
+    char buffer[65526];
     int socket_fd;
+    struct sockaddr_in server;
 
     if (argc != 2)
     {
@@ -31,13 +32,17 @@ int main(const int argc, char **argv)
     server.sin_port = htons(atoi(argv[1]));
     server.sin_addr.s_addr = INADDR_ANY;
 
-    socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if ((bind(socket_fd, (struct sockaddr *)&server, sizeof(server.sin_addr))))
+    if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         ft_putstr_fd(2, "Fatal error\n");
         return 1;
     }
-    if (listen(socket_fd, 100))
+    if (bind(socket_fd, (struct sockaddr *)&server, sizeof(server)) < 0)
+    {
+        ft_putstr_fd(2, "Fatal error\n");
+        return 1;
+    }
+    if (listen(socket_fd, 100) == -1)
     {
         ft_putstr_fd(2, "Fatal error\n");
         return 1;
@@ -76,23 +81,40 @@ int main(const int argc, char **argv)
                         close(client_fd);
                         return 1;
                     }
+                    FD_SET(client_fd, &read_fds);
                     ft_putstr_fd(1, "Client connected\n");
                 }
-                else
+                else if (FD_ISSET(i, &read_fds))
                 {
-                    char buffer[65536];
-                    const ssize_t bytes_read = recv(client_fd, &buffer, sizeof(buffer), 0);
-                    if (bytes_read < 0)
+                    if (i == client_fd)
                     {
-                        ft_putstr_fd(2, "Fatal error\n");
-                        FD_CLR(client_fd, &read_fds);
-                        close(client_fd);
-                        return 1;
+                        ssize_t len = recv(client_fd, &buffer, sizeof(buffer), 0);
+                        if (len < 0)
+                        {
+                            ft_putstr_fd(2, "Fatal error\n");
+                            FD_CLR(client_fd, &read_fds);
+                            close(client_fd);
+                            return 1;
+                        }
+                        if (len == 0)
+                        {
+                            ft_putstr_fd(1, "Client disconnected\n");
+                            FD_CLR(client_fd, &read_fds);
+                            close(client_fd);
+                            return 1;
+                        }
+                        ssize_t ret = send(client_fd, &buffer, sizeof(buffer), 0);
+                        if (ret < 0)
+                        {
+                            ft_putstr_fd(2,"Fatal error\n");
+                            FD_CLR(client_fd, &read_fds);
+                            close(client_fd);
+                            return 1;
+                        }
                     }
                 }
             }
         }
     }
     return 0;
-
 }
