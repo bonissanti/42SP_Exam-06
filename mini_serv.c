@@ -46,6 +46,7 @@ int main(const int argc, char **argv)
     fd_set read_fds;
     fd_set write_fds;
     fd_set current_fds;
+    int client_fd = 0;
 
     FD_ZERO(&read_fds);
     FD_ZERO(&write_fds);
@@ -67,10 +68,12 @@ int main(const int argc, char **argv)
                 if (i == socket_fd)
                 {
                     socklen_t len = sizeof(server);
-                    const int client_fd = accept(socket_fd, (struct sockaddr *)&server, &len);
+                    client_fd = accept(socket_fd, (struct sockaddr *)&server, &len);
                     if (client_fd < 0)
                     {
                         ft_putstr_fd(2, "Fatal error\n");
+                        FD_CLR(client_fd, &read_fds);
+                        close(client_fd);
                         return 1;
                     }
                     ft_putstr_fd(1, "Client connected\n");
@@ -78,10 +81,15 @@ int main(const int argc, char **argv)
                 else
                 {
                     char buffer[65536];
-                    size_t bytes_read;
-
+                    const ssize_t bytes_read = recv(client_fd, &buffer, sizeof(buffer), 0);
+                    if (bytes_read < 0)
+                    {
+                        ft_putstr_fd(2, "Fatal error\n");
+                        FD_CLR(client_fd, &read_fds);
+                        close(client_fd);
+                        return 1;
+                    }
                 }
-
             }
         }
     }
