@@ -6,6 +6,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+int max(int a, int b)
+{
+    if (a > b)
+        return a;
+    return b;
+}
+
 void ft_putstr_fd(int fd, const char *str)
 {
     int i = 0;
@@ -19,6 +26,7 @@ void ft_putstr_fd(int fd, const char *str)
 int main(const int argc, char **argv)
 {
     char buffer[65526];
+    int maxFd;
     int socket_fd;
     struct sockaddr_in server;
 
@@ -37,11 +45,20 @@ int main(const int argc, char **argv)
         ft_putstr_fd(2, "Fatal error\n");
         return 1;
     }
+    int opt = 1;
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+    {
+        ft_putstr_fd(2, "Fatal error\n");
+        return 1;
+    }
+
     if (bind(socket_fd, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
         ft_putstr_fd(2, "Fatal error\n");
         return 1;
     }
+
+
     if (listen(socket_fd, 100) == -1)
     {
         ft_putstr_fd(2, "Fatal error\n");
@@ -56,62 +73,29 @@ int main(const int argc, char **argv)
     FD_ZERO(&read_fds);
     FD_ZERO(&write_fds);
     FD_ZERO(&current_fds);
-    FD_SET(socket_fd, &read_fds);
-
+    FD_SET(socket_fd, &current_fds);
+    maxFd = socket_fd;
     while (true)
     {
-        current_fds = read_fds;
-        if (select(FD_SETSIZE, &current_fds, NULL, NULL, NULL) < 0)
+        read_fds = current_fds;
+        write_fds = current_fds;
+        if (select(FD_SETSIZE, &read_fds, &write_fds, NULL, NULL) < 0)
         {
             ft_putstr_fd(2, "Fatal error\n");
             return 1;
         }
         for (int i = 0; i < FD_SETSIZE; i++)
         {
-            if (FD_ISSET(i, &current_fds))
+            if (FD_ISSET(i, &read_fds))
             {
                 if (i == socket_fd)
                 {
                     socklen_t len = sizeof(server);
-                    client_fd = accept(socket_fd, (struct sockaddr *)&server, &len);
+                    const int client_fd = accept(i, (struct sockaddr *)&server, &len);
                     if (client_fd < 0)
-                    {
-                        ft_putstr_fd(2, "Fatal error\n");
-                        FD_CLR(client_fd, &read_fds);
-                        close(client_fd);
-                        return 1;
-                    }
-                    FD_SET(client_fd, &read_fds);
-                    ft_putstr_fd(1, "Client connected\n");
-                }
-                else if (FD_ISSET(i, &read_fds))
-                {
-                    if (i == client_fd)
-                    {
-                        ssize_t len = recv(client_fd, &buffer, sizeof(buffer), 0);
-                        if (len < 0)
-                        {
-                            ft_putstr_fd(2, "Fatal error\n");
-                            FD_CLR(client_fd, &read_fds);
-                            close(client_fd);
-                            return 1;
-                        }
-                        if (len == 0)
-                        {
-                            ft_putstr_fd(1, "Client disconnected\n");
-                            FD_CLR(client_fd, &read_fds);
-                            close(client_fd);
-                            return 1;
-                        }
-                        ssize_t ret = send(client_fd, &buffer, sizeof(buffer), 0);
-                        if (ret < 0)
-                        {
-                            ft_putstr_fd(2,"Fatal error\n");
-                            FD_CLR(client_fd, &read_fds);
-                            close(client_fd);
-                            return 1;
-                        }
-                    }
+                        continue;
+                    FD_SET(client_fd, &current_fds);
+                    maxFd = max(maxFd, client_fd);
                 }
             }
         }
