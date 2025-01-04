@@ -15,7 +15,6 @@ int max(int a, int b)
 
 void ft_putstr_fd(int fd, const char *str)
 {
-    (void)fd;
     int i = 0;
     while (str[i])
     {
