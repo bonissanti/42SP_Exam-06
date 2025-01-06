@@ -51,7 +51,7 @@ build cmake_object_order_depends_target_Exam06: phony || .
 
 build CMakeFiles/Exam06.dir/mini_serv.c.o: C_COMPILER__Exam06_unscanned_Debug /home/bruno/Documents/42SP/Exam06/mini_serv.c || cmake_object_order_depends_target_Exam06
   DEP_FILE = CMakeFiles/Exam06.dir/mini_serv.c.o.d
-  FLAGS = -g -std=gnu99 -fdiagnostics-color=always
+  FLAGS = -Wall -Wextra -Werror -g -std=gnu99 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles/Exam06.dir
   OBJECT_FILE_DIR = CMakeFiles/Exam06.dir
 
@@ -64,7 +64,7 @@ build CMakeFiles/Exam06.dir/mini_serv.c.o: C_COMPILER__Exam06_unscanned_Debug /h
 # Link the executable Exam06
 
 build Exam06: C_EXECUTABLE_LINKER__Exam06_Debug CMakeFiles/Exam06.dir/mini_serv.c.o
-  FLAGS = -g
+  FLAGS = -Wall -Wextra -Werror -g
   OBJECT_DIR = CMakeFiles/Exam06.dir
   POST_BUILD = :
   PRE_LINK = :
