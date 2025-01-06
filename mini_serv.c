@@ -15,22 +15,58 @@ void ft_putstr(char *str)
     }
 }
 
+int max(int a, int b)
+{
+    if (a > b)
+        return a;
+    return b;
+}
+
 typedef struct s_client
 {
-    int fd;
+    int id;
     char msg[65532];
 } t_client;
 
 int id = 0;
 
+void send_msg(t_client *client, int fd, char msg[65532], ssize_t len)
+{
+    for (int i = 0; i < len; i++)
+    {
+        client[fd].msg[i] = msg[i];
+        if (client[fd].msg[i] == '\n')
+        {
+            client[fd].msg[i] = '\0';
+            //TODO: write in a buffer using sprintf
+            //TODO: delivery to all fds connected, excpet sender (using fd_isset - writefds)
+            ft_putstr(client[fd].msg);
+            bzero(&msg, sizeof(msg));
+        }
+    }
+}
+
+
 int main(int argc, char **argv)
 {
     int max_fd = 0;
+    char buffer[65532];
     struct sockaddr_in server;
-    t_client client[1024];
+    t_client *client = NULL;
 
+    if (argc != 2)
+    {
+        ft_putstr("Wrong number of arguments\n");
+        return 1;
+    }
+
+    client = calloc(2048, sizeof(t_client));
+    if (!client)
+    {
+        ft_putstr("Fatal error\n");
+        return 1;
+    }
     memset(&server, 0, sizeof(server));
-    // memset(&client, 0, sizeof(client));
     server.sin_family = AF_INET;
     server.sin_port = htons(atoi(argv[1]));
     server.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -39,12 +75,14 @@ int main(int argc, char **argv)
     if (bind(server_fd, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
         ft_putstr("Fatal error\n");
+        free(client);
         exit(1);
     }
 
     if (listen(server_fd, 0) < 0)
     {
         ft_putstr("Fatal error\n");
+        free(client);
         exit(1);
     }
 
@@ -66,6 +104,7 @@ int main(int argc, char **argv)
             ft_putstr("Fatal error\n");
             FD_CLR(server_fd, &current_fds);
             close(server_fd);
+            free(client);
             exit(1);
         }
         for (int i = 0; i <= max_fd; i++)
@@ -82,15 +121,24 @@ int main(int argc, char **argv)
                         FD_CLR(client_fd, &current_fds);
                         FD_CLR(server_fd, &current_fds);
                         close(server_fd);
+                        free(client);
                         exit(1);
                     }
                     FD_SET(client_fd, &current_fds);
-                    // client[id++].fd = client_fd;
+                    client[client_fd].id = id++;
+                    max_fd = max(max_fd, client_fd);
                     break ;
                 }
-                ft_putstr("Hello\n");
+                ssize_t len = recv(i, buffer, sizeof(buffer), 0);
+                if (len < 0)
+                {
+                    ft_putstr("Remove client\n");
+                    break;
+                }
+                buffer[len] = '\0';
+                send_msg(client, i, buffer, len);
             }
         }
-
     }
+    free(client);
 }
