@@ -39,7 +39,7 @@ void send_to_all(int exceptFd)
     {
         if (FD_ISSET(i, &write_fds) && i != exceptFd)
         {
-            if (send(i, recvBuf, sizeof(recvBuf), 0) < 0)
+            if (send(i, recvBuf, strlen(recvBuf), 0) < 0)
             {
                 ft_putstr("Fatal error\n");
                 FD_CLR(i, &write_fds);
@@ -57,12 +57,9 @@ void broadcast_message(t_client *client, int fd, char msg[65532], ssize_t len)
         if (client[fd].msg[i] == '\n')
         {
             client[fd].msg[i] = '\0';
-            //TODO: write in a buffer using sprintf
-            //TODO: delivery to all fds connected, except sender (using fd_isset - writeFds)
             sprintf(recvBuf, "client %d: %s\n", client[fd].id, client[fd].msg);
-            // ft_putstr(client[fd].msg);
             send_to_all(fd);
-            bzero(&msg, strlen(msg));
+            bzero(&client[fd].msg, strlen(client[fd].msg));
         }
     }
 }
