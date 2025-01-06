@@ -39,7 +39,7 @@ void send_msg(t_client *client, int fd, char msg[65532], ssize_t len)
         {
             client[fd].msg[i] = '\0';
             //TODO: write in a buffer using sprintf
-            //TODO: delivery to all fds connected, excpet sender (using fd_isset - writefds)
+            //TODO: delivery to all fds connected, except sender (using fd_isset - writeFds)
             ft_putstr(client[fd].msg);
             bzero(&msg, sizeof(msg));
         }
