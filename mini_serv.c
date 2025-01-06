@@ -29,8 +29,27 @@ typedef struct s_client
 } t_client;
 
 int id = 0;
+int max_fd = 0;
+char recvBuf[65632];
+fd_set write_fds, read_fds, current_fds;
 
-void send_msg(t_client *client, int fd, char msg[65532], ssize_t len)
+void send_to_all(int exceptFd)
+{
+    for (int i = 0; i <= max_fd; i++)
+    {
+        if (FD_ISSET(i, &write_fds) && i != exceptFd)
+        {
+            if (send(i, recvBuf, sizeof(recvBuf), 0) < 0)
+            {
+                ft_putstr("Fatal error\n");
+                FD_CLR(i, &write_fds);
+                close(i);
+            }
+        }
+    }
+}
+
+void broadcast_message(t_client *client, int fd, char msg[65532], ssize_t len)
 {
     for (int i = 0; i < len; i++)
     {
@@ -40,8 +59,10 @@ void send_msg(t_client *client, int fd, char msg[65532], ssize_t len)
             client[fd].msg[i] = '\0';
             //TODO: write in a buffer using sprintf
             //TODO: delivery to all fds connected, except sender (using fd_isset - writeFds)
-            ft_putstr(client[fd].msg);
-            bzero(&msg, sizeof(msg));
+            sprintf(recvBuf, "client %d: %s\n", client[fd].id, client[fd].msg);
+            // ft_putstr(client[fd].msg);
+            send_to_all(fd);
+            bzero(&msg, strlen(msg));
         }
     }
 }
@@ -49,7 +70,6 @@ void send_msg(t_client *client, int fd, char msg[65532], ssize_t len)
 
 int main(int argc, char **argv)
 {
-    int max_fd = 0;
     char buffer[65532];
     struct sockaddr_in server;
     t_client *client = NULL;
@@ -88,11 +108,9 @@ int main(int argc, char **argv)
 
     max_fd = server_fd;
 
-    fd_set write_fds, read_fds, current_fds;
     FD_ZERO(&read_fds);
     FD_ZERO(&write_fds);
     FD_ZERO(&current_fds);
-
     FD_SET(server_fd, &current_fds);
     while (1)
     {
@@ -136,7 +154,7 @@ int main(int argc, char **argv)
                     break;
                 }
                 buffer[len] = '\0';
-                send_msg(client, i, buffer, len);
+                broadcast_message(client, i, buffer, len);
             }
         }
     }
