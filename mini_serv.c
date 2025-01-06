@@ -25,12 +25,13 @@ int max(int a, int b)
 typedef struct s_client
 {
     int id;
-    char msg[65532];
+    char msg[65500];
 } t_client;
 
 int id = 0;
 int max_fd = 0;
 char recvBuf[65632];
+t_client client[1024];
 fd_set write_fds, read_fds, current_fds;
 
 void send_to_all(int exceptFd)
@@ -64,12 +65,16 @@ void broadcast_message(t_client *client, int fd, char msg[65532], ssize_t len)
     }
 }
 
+// void disconnect_client(int fd)
+// {
+//
+// }
+
 
 int main(int argc, char **argv)
 {
     char buffer[65532];
     struct sockaddr_in server;
-    t_client *client = NULL;
 
     if (argc != 2)
     {
@@ -77,13 +82,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    client = calloc(2048, sizeof(t_client));
-    if (!client)
-    {
-        ft_putstr("Fatal error\n");
-        return 1;
-    }
     memset(&server, 0, sizeof(server));
+    memset(&client, 0, sizeof(t_client));
     server.sin_family = AF_INET;
     server.sin_port = htons(atoi(argv[1]));
     server.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -92,14 +92,12 @@ int main(int argc, char **argv)
     if (bind(server_fd, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
         ft_putstr("Fatal error\n");
-        free(client);
         exit(1);
     }
 
     if (listen(server_fd, 0) < 0)
     {
         ft_putstr("Fatal error\n");
-        free(client);
         exit(1);
     }
 
@@ -119,7 +117,6 @@ int main(int argc, char **argv)
             ft_putstr("Fatal error\n");
             FD_CLR(server_fd, &current_fds);
             close(server_fd);
-            free(client);
             exit(1);
         }
         for (int i = 0; i <= max_fd; i++)
@@ -136,7 +133,6 @@ int main(int argc, char **argv)
                         FD_CLR(client_fd, &current_fds);
                         FD_CLR(server_fd, &current_fds);
                         close(server_fd);
-                        free(client);
                         exit(1);
                     }
                     FD_SET(client_fd, &current_fds);
@@ -155,5 +151,4 @@ int main(int argc, char **argv)
             }
         }
     }
-    free(client);
 }
