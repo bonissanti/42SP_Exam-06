@@ -129,21 +129,29 @@ int main(int argc, char **argv)
                     const int client_fd = accept(server_fd, (struct sockaddr *)&server, &len);
                     if (client_fd < 0)
                     {
+                        // TODO: test is necessary
                         ft_putstr("Fatal error\n");
                         FD_CLR(client_fd, &current_fds);
                         FD_CLR(server_fd, &current_fds);
                         close(server_fd);
-                        exit(1);
+                        continue;
+                        // exit(1);
                     }
+                    sprintf(recvBuf, "server: client %d just arrived\n", client[client_fd].id);
                     FD_SET(client_fd, &current_fds);
                     client[client_fd].id = id++;
                     max_fd = max(max_fd, client_fd);
+                    bzero(&recvBuf, strlen(recvBuf));
                     break ;
                 }
                 ssize_t len = recv(i, buffer, sizeof(buffer), 0);
                 if (len < 0)
                 {
-                    ft_putstr("Remove client\n");
+                    //TODO: test is necessary
+                    sprintf(recvBuf, "server: client %d just left\n", client[i].id);
+                    FD_CLR(i, &current_fds);
+                    close(i);
+                    bzero(&recvBuf, strlen(recvBuf));
                     break;
                 }
                 buffer[len] = '\0';
