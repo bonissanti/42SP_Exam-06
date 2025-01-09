@@ -45,16 +45,18 @@ void send_to_all(int exceptFd)
 
 void broadcast_message(t_client client[1024], char buffer[65532], int fd, ssize_t len)
 {
-    for (int i = 0; i < len; i++)
+    size_t j = strlen(client[fd].msg);
+    for (int i = 0; i < len; i++, j++)
     {
-        client[fd].msg[i] = buffer[i];
-        if (client[fd].msg[i] == '\n')
+        client[fd].msg[j] = buffer[i];
+        if (client[fd].msg[j] == '\n')
         {
-            client[fd].msg[i] = '\0';
+            client[fd].msg[j] = '\0';
             sprintf(recvBuf, "client %d: %s\n", client[fd].id, client[fd].msg);
             send_to_all(fd);
             bzero(&recvBuf, strlen(recvBuf));
             bzero(&client[fd].msg, strlen(client[fd].msg));
+            j = -1;
         }
     }
 }
